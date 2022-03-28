@@ -9,12 +9,12 @@ function startGame() {
     canvas = document.querySelector("#myCanvas");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
-    
-    scene.enablePhysics();
 
+    scene.enablePhysics();
+    
     modifySettings();
 
-    let tank = scene.getMeshByName("myTank");
+    let tank = scene.getMeshByName("myPandaTank");
 
     engine.runRenderLoop(() => {
         let deltaTime = engine.getDeltaTime();
@@ -27,8 +27,10 @@ function startGame() {
 
 function createScene() {
     let scene = new BABYLON.Scene(engine);
+    scene.enablePhysics();
+
     let ground = createGround(scene);
-    let freeCamera = createFreeCamera(scene);
+    let walls = createWalls(scene);
 
     let tank = createTank(scene);
     scene.spheres = [];
@@ -45,21 +47,51 @@ function createScene() {
 }
 
 function createGround(scene) {
-    const groundOptions = { width:2000, height:2000, subdivisions:20, minHeight:0, maxHeight:100, onReady: onGroundCreated};
-    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm", 'images/flatmap.png', groundOptions, scene); 
+    var ground = BABYLON.Mesh.CreateGround("ground1", 1000, 1000, 2, scene);
     ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
-    function onGroundCreated() {
-        const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
-        groundMaterial.diffuseTexture = new BABYLON.Texture("images/myground.jpg");
-        ground.material = groundMaterial;
-        ground.checkCollisions = true;
-    }
+    const groundMat = new BABYLON.StandardMaterial("groundMat");
+    groundMat.diffuseTexture = new BABYLON.Texture("images/myground.jpg");
+    ground.material = groundMat;
+    ground.checkCollisions = true;
+
     return ground;
 }
 
+function createWalls(scene){
+    var wallNorth = BABYLON.MeshBuilder.CreateBox("wallNorth", {height:1000, depth:10, width:1000}, scene);
+    wallNorth.position.z = 500;
+    wallNorth.rotation.y = - Math.PI ;
+    wallNorth.checkCollisions = true;
+    wallNorth.physicsImpostor = new BABYLON.PhysicsImpostor(wallNorth, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
+    var wallSouth = BABYLON.MeshBuilder.CreateBox("wallSouth", {height:1000, depth:10, width:1000}, scene);
+    wallSouth.position.z = -500;
+    wallSouth.checkCollisions = true;
+    wallSouth.physicsImpostor = new BABYLON.PhysicsImpostor(wallSouth, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
+    var wallWest = BABYLON.MeshBuilder.CreateBox("wallWest", {height:1000, depth:10, width:1000}, scene);
+    wallWest.position.x = -500;
+    wallWest.rotation.y = - Math.PI / 2;
+    wallWest.checkCollisions = true;
+    wallWest.physicsImpostor = new BABYLON.PhysicsImpostor(wallWest, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
+    var wallEast = BABYLON.MeshBuilder.CreateBox("wallEast", {height:1000, depth:10, width:1000}, scene);
+    wallEast.position.x = 500;
+    wallEast.rotation.y = Math.PI / 2;
+    wallEast.checkCollisions = true;
+    wallEast.physicsImpostor = new BABYLON.PhysicsImpostor(wallEast, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
+    const wallMat = new BABYLON.StandardMaterial("wallMat");
+    wallMat.diffuseTexture = new BABYLON.Texture("images/bamboo.jpg");
+    wallNorth.material = wallMat;
+    wallSouth.material = wallMat;
+    wallEast.material = wallMat;
+    wallWest.material = wallMat;
+}
+
 function createLights(scene) {
-    let light = new BABYLON.DirectionalLight("dir0", new BABYLON.Vector3(-1, -1, 0), scene);
+    let light = new BABYLON.HemisphericLight("dir0", new BABYLON.Vector3(0, 1, 0), scene);
     light.color = new BABYLON.Color3.Red;
 }
 
@@ -95,7 +127,7 @@ function createFollowCamera(scene, target) {
 
 let zMovement = 5;
 function createTank(scene) {
-    let tank = new BABYLON.MeshBuilder.CreateBox("myTank", {height:6, depth:6, width:6}, scene);
+    let tank = new BABYLON.MeshBuilder.CreateBox("myPandaTank", {height:6, depth:6, width:6}, scene);
     let tankMaterial = new BABYLON.StandardMaterial("tankMaterial", scene);
     tankMaterial.diffuseTexture = new BABYLON.Texture("images/panda.jpg", scene);
     tankMaterial.diffuseColor = new BABYLON.Color3.Red;
@@ -103,9 +135,9 @@ function createTank(scene) {
     tank.material = tankMaterial;
     tank.applyGravity = true;
 
-    tank.position.y = 3;
+    tank.position.y = 4;
     tank.speed = 2;
-    tank.frontVector = new BABYLON.Vector3(0, 0, 1);
+    tank.frontVector = new BABYLON.Vector3(1, 0, 1);
 
     tank.move = () => {
         let yMovement = 0;
@@ -115,7 +147,6 @@ function createTank(scene) {
             yMovement = -2;
         } 
 
-        
         if(inputStates.up) {
             tank.moveWithCollisions(tank.frontVector.multiplyByFloats(tank.speed, tank.speed, tank.speed));
         }    
@@ -140,12 +171,13 @@ function createSphere(scene, id) {
     let sphere = BABYLON.MeshBuilder.CreateSphere("mySphere" + id, {diameter: 5, segments: 32}, scene);
     sphere.material = new BABYLON.StandardMaterial("sphereMaterial", scene);
     sphere.material.diffuseTexture = new BABYLON.Texture("images/cible.png", scene);
+    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
 
-    let xrand = Math.floor(Math.random()*1000 - 250);
-    let zrand = Math.floor(Math.random()*1000 - 250);
+    let xrand = Math.floor(Math.random()*500 - 250);
+    let zrand = Math.floor(Math.random()*500 - 250);
     
     sphere.position.x = xrand;
-    sphere.position.y = 2.5;
+    sphere.position.y = 5;
     sphere.position.z = zrand;
     sphere.frontVector = new BABYLON.Vector3(xrand,zrand,1);
 
