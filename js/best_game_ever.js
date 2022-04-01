@@ -37,6 +37,10 @@ function createScene() {
     for(let i = 0; i < 10; i++) {
         scene.spheres[i] = createSphere(scene, i);
     }
+    scene.bamboo = [];
+    for(let i = 0; i < 10; i++) {
+        scene.bamboo[i] = createBamboo(scene, i);
+    }
 
     let followCamera = createFollowCamera(scene, tank);
     scene.activeCamera = followCamera;
@@ -51,7 +55,7 @@ function createGround(scene) {
     ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
     const groundMat = new BABYLON.StandardMaterial("groundMat");
-    groundMat.diffuseTexture = new BABYLON.Texture("images/myground.jpg");
+    groundMat.diffuseTexture = new BABYLON.Texture("images/ground.jpg");
     ground.material = groundMat;
     ground.checkCollisions = true;
 
@@ -83,7 +87,7 @@ function createWalls(scene){
     wallEast.physicsImpostor = new BABYLON.PhysicsImpostor(wallEast, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
     const wallMat = new BABYLON.StandardMaterial("wallMat");
-    wallMat.diffuseTexture = new BABYLON.Texture("images/bamboo.jpg");
+    wallMat.diffuseTexture = new BABYLON.Texture("images/bambooWall.jpg");
     wallNorth.material = wallMat;
     wallSouth.material = wallMat;
     wallEast.material = wallMat;
@@ -184,6 +188,25 @@ function createSphere(scene, id) {
     sphere.checkCollisions = true;
 
     return sphere;
+}
+
+function createBamboo(scene, id) {
+    let bamboo = BABYLON.MeshBuilder.CreateCylinder("myBamboo" + id, {height: 20, diameter: 2, segments: 32}, scene);
+    bamboo.material = new BABYLON.StandardMaterial("bambooMaterial", scene);
+    bamboo.material.diffuseTexture = new BABYLON.Texture("images/bamboo.jpg", scene);
+    bamboo.physicsImpostor = new BABYLON.PhysicsImpostor(bamboo, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
+
+    let xrand = Math.floor(Math.random()*500 - 250);
+    let zrand = Math.floor(Math.random()*500 - 250);
+    
+    bamboo.position.x = xrand;
+    bamboo.position.y = 10;
+    bamboo.position.z = zrand;
+    bamboo.frontVector = new BABYLON.Vector3(xrand,zrand,1);
+
+    bamboo.checkCollisions = true;
+
+    return bamboo;
 }
 
 window.addEventListener("resize", () => {
