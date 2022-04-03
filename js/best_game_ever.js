@@ -33,9 +33,14 @@ function createScene() {
     let walls = createWalls(scene);
 
     let tank = createTank(scene);
+    tank.physicsImpostor = new BABYLON.PhysicsImpostor(tank, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0 }, scene);
+
     scene.spheres = [];
     for(let i = 0; i < 10; i++) {
         scene.spheres[i] = createSphere(scene, i);
+    	scene.spheres[i].physicsImpostor.registerOnPhysicsCollide([tank.physicsImpostor], () => {
+		scene.spheres[i].setEnabled(true);
+        })
     }
 
     let followCamera = createFollowCamera(scene, tank);
