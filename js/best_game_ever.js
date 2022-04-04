@@ -16,11 +16,12 @@ function startGame() {
 
     let tank = scene.getMeshByName("myPandaTank");
 
+
     engine.runRenderLoop(() => {
         let deltaTime = engine.getDeltaTime();
 
         tank.move();
-
+        
         scene.render();
     });
 }
@@ -29,10 +30,10 @@ function createScene() {
     let scene = new BABYLON.Scene(engine);
     scene.enablePhysics();
 
-    let ground = createGround(scene);
-    let walls = createWalls(scene);
-
-    let tank = createTank(scene);
+    createGround(scene);
+    createWalls(scene);
+    createLights(scene);
+    
     scene.spheres = [];
     for(let i = 0; i < 10; i++) {
         scene.spheres[i] = createSphere(scene, i);
@@ -42,10 +43,21 @@ function createScene() {
         scene.bamboo[i] = createBamboo(scene, i);
     }
 
+    let tank = createTank(scene);
+
     let followCamera = createFollowCamera(scene, tank);
     scene.activeCamera = followCamera;
 
-    createLights(scene);
+    scene.registerBeforeRender(
+        tank.crunchcrunch = () => {
+
+            for(let i = 0; i < 10; i++) {
+                if (scene.bamboo[i].intersectsMesh(tank, false)){
+                    scene.bamboo[i].dispose();
+                }
+            }   
+        }
+    );
  
    return scene;
 }
@@ -135,7 +147,7 @@ function createTank(scene) {
     let tankMaterial = new BABYLON.StandardMaterial("tankMaterial", scene);
     tankMaterial.diffuseTexture = new BABYLON.Texture("images/panda.jpg", scene);
     tankMaterial.diffuseColor = new BABYLON.Color3.Red;
-    tankMaterial.emissiveColor = new BABYLON.Color3.Random;
+    tankMaterial.emissiveColor = new BABYLON.Color3.Green;
     tank.material = tankMaterial;
     tank.applyGravity = true;
 
@@ -191,16 +203,16 @@ function createSphere(scene, id) {
 }
 
 function createBamboo(scene, id) {
-    let bamboo = BABYLON.MeshBuilder.CreateCylinder("myBamboo" + id, {height: 20, diameter: 2, segments: 32}, scene);
+    let bamboo = BABYLON.MeshBuilder.CreateCylinder("myBamboo" + id, {height: 30, diameter: 2}, scene);
     bamboo.material = new BABYLON.StandardMaterial("bambooMaterial", scene);
     bamboo.material.diffuseTexture = new BABYLON.Texture("images/bamboo.jpg", scene);
-    bamboo.physicsImpostor = new BABYLON.PhysicsImpostor(bamboo, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
+    bamboo.physicsImpostor = new BABYLON.PhysicsImpostor(bamboo, BABYLON.PhysicsImpostor.CylinderImpostor, { mass: 2, restitution: 0.9 }, scene);
 
     let xrand = Math.floor(Math.random()*500 - 250);
     let zrand = Math.floor(Math.random()*500 - 250);
     
     bamboo.position.x = xrand;
-    bamboo.position.y = 10;
+    bamboo.position.y = 15;
     bamboo.position.z = zrand;
     bamboo.frontVector = new BABYLON.Vector3(xrand,zrand,1);
 
