@@ -11,7 +11,7 @@ function startGame() {
     scene = createScene();
 
     scene.enablePhysics();
-    
+
     modifySettings();
 
     let tank = scene.getMeshByName("myPandaTank");
@@ -20,7 +20,7 @@ function startGame() {
         let deltaTime = engine.getDeltaTime();
 
         tank.move();
-        
+
         scene.render();
     };
 
@@ -36,16 +36,16 @@ function createScene() {
     createGround(scene);
     createWalls(scene);
     createLights(scene);
-    
+
     let tank = createTank(scene);
 
     scene.spheres = [];
-    for(let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {
         scene.spheres[i] = createSphere(scene, i);
     }
 
     scene.bamboo = [];
-    for(let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {
         scene.bamboo[i] = createBamboo(scene, i);
     }
 
@@ -55,24 +55,33 @@ function createScene() {
     loadSounds(scene);
 
     scene.registerBeforeRender(
-        
+
         tank.crunchcrunch = () => {
 
-            for(let i = 0; i < 10; i++) {
-                if (scene.bamboo[i].intersectsMesh(tank, false)){
-                    scene.assets.crunchcrunchSound.setPosition(tank.position);
-                    scene.assets.crunchcrunchSound.setPlaybackRate(0.8 + (Math.random() - 0.8));
-                    scene.assets.crunchcrunchSound.play();
+            for (let i = 0; i < 10; i++) {
+                if (scene.bamboo[i].intersectsMesh(tank, false)) {
+                    if (!scene.assets.crunchcrunchSound.isPlaying) {
+                        scene.assets.crunchcrunchSound.setPosition(tank.position);
+                        scene.assets.crunchcrunchSound.setPlaybackRate(0.8 + (Math.random() - 0.8));
+                        scene.assets.crunchcrunchSound.play();
 
-                    scene.bamboo[i].dispose();
+                        console.log("ON JOUE LE CRUNCHCRUNCH SOUND")
+                    }
+
+                    if(!scene.bamboo[i]._disposed){
+                        scene.bamboo[i].dispose();
+                        console.log("J'incrémente le score")
+                    }
+
+                    // on incrémente le score
                 }
-            }   
+            }
         }
     );
 
-    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
- 
-   return scene;
+    //var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+    return scene;
 }
 
 function createGround(scene) {
@@ -87,25 +96,25 @@ function createGround(scene) {
     return ground;
 }
 
-function createWalls(scene){
-    var wallNorth = BABYLON.MeshBuilder.CreateBox("wallNorth", {height:1000, depth:10, width:1000}, scene);
+function createWalls(scene) {
+    var wallNorth = BABYLON.MeshBuilder.CreateBox("wallNorth", { height: 1000, depth: 10, width: 1000 }, scene);
     wallNorth.position.z = 500;
-    wallNorth.rotation.y = - Math.PI ;
+    wallNorth.rotation.y = - Math.PI;
     wallNorth.checkCollisions = true;
     wallNorth.physicsImpostor = new BABYLON.PhysicsImpostor(wallNorth, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
-    var wallSouth = BABYLON.MeshBuilder.CreateBox("wallSouth", {height:1000, depth:10, width:1000}, scene);
+    var wallSouth = BABYLON.MeshBuilder.CreateBox("wallSouth", { height: 1000, depth: 10, width: 1000 }, scene);
     wallSouth.position.z = -500;
     wallSouth.checkCollisions = true;
     wallSouth.physicsImpostor = new BABYLON.PhysicsImpostor(wallSouth, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
-    var wallWest = BABYLON.MeshBuilder.CreateBox("wallWest", {height:1000, depth:10, width:1000}, scene);
+    var wallWest = BABYLON.MeshBuilder.CreateBox("wallWest", { height: 1000, depth: 10, width: 1000 }, scene);
     wallWest.position.x = -500;
     wallWest.rotation.y = - Math.PI / 2;
     wallWest.checkCollisions = true;
     wallWest.physicsImpostor = new BABYLON.PhysicsImpostor(wallWest, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
-    var wallEast = BABYLON.MeshBuilder.CreateBox("wallEast", {height:1000, depth:10, width:1000}, scene);
+    var wallEast = BABYLON.MeshBuilder.CreateBox("wallEast", { height: 1000, depth: 10, width: 1000 }, scene);
     wallEast.position.x = 500;
     wallEast.rotation.y = Math.PI / 2;
     wallEast.checkCollisions = true;
@@ -127,7 +136,7 @@ function createLights(scene) {
 function createFreeCamera(scene) {
     let camera = new BABYLON.FreeCamera("freeCamera", new BABYLON.Vector3(0, 50, 0), scene);
     camera.attachControl(canvas);
-    camera.checkCollisions = true; 
+    camera.checkCollisions = true;
     camera.applyGravity = true;
 
     camera.keysUp.push('z'.charCodeAt(0));
@@ -146,17 +155,17 @@ function createFollowCamera(scene, target) {
     let camera = new BABYLON.FollowCamera("tankFollowCamera", target.position, scene, target);
 
     camera.radius = 50; // how far from the object to follow
-	camera.heightOffset = 14; // how high above the object to place the camera
-	camera.rotationOffset = 180; // the viewing angle
-	camera.cameraAcceleration = .1; // how fast to move
-	camera.maxCameraSpeed = 5; // speed limit
+    camera.heightOffset = 14; // how high above the object to place the camera
+    camera.rotationOffset = 180; // the viewing angle
+    camera.cameraAcceleration = .1; // how fast to move
+    camera.maxCameraSpeed = 5; // speed limit
 
     return camera;
 }
 
 let zMovement = 5;
 function createTank(scene) {
-    let tank = new BABYLON.MeshBuilder.CreateBox("myPandaTank", {height:6, depth:6, width:6}, scene);
+    let tank = new BABYLON.MeshBuilder.CreateBox("myPandaTank", { height: 6, depth: 6, width: 6 }, scene);
     let tankMaterial = new BABYLON.StandardMaterial("tankMaterial", scene);
     tankMaterial.diffuseTexture = new BABYLON.Texture("images/panda.jpg", scene);
     tankMaterial.diffuseColor = new BABYLON.Color3.Red;
@@ -170,24 +179,24 @@ function createTank(scene) {
 
     tank.move = () => {
         let yMovement = 0;
-       
+
         if (tank.position.y > 2) {
             zMovement = 0;
             yMovement = -2;
-        } 
+        }
 
-        if(inputStates.up) {
+        if (inputStates.up) {
             tank.moveWithCollisions(tank.frontVector.multiplyByFloats(tank.speed, tank.speed, tank.speed));
-        }    
-        if(inputStates.down) {
+        }
+        if (inputStates.down) {
             tank.moveWithCollisions(tank.frontVector.multiplyByFloats(-tank.speed, -tank.speed, -tank.speed));
 
-        }  
-        if(inputStates.left) {
+        }
+        if (inputStates.left) {
             tank.rotation.y -= 0.015;
             tank.frontVector = new BABYLON.Vector3(Math.sin(tank.rotation.y), 0, Math.cos(tank.rotation.y));
-        }    
-        if(inputStates.right) {
+        }
+        if (inputStates.right) {
             tank.rotation.y += 0.015;
             tank.frontVector = new BABYLON.Vector3(Math.sin(tank.rotation.y), 0, Math.cos(tank.rotation.y));
         }
@@ -197,18 +206,18 @@ function createTank(scene) {
 }
 
 function createSphere(scene, id) {
-    let sphere = BABYLON.MeshBuilder.CreateSphere("mySphere" + id, {diameter: 5, segments: 32}, scene);
+    let sphere = BABYLON.MeshBuilder.CreateSphere("mySphere" + id, { diameter: 5, segments: 32 }, scene);
     sphere.material = new BABYLON.StandardMaterial("sphereMaterial", scene);
     sphere.material.diffuseTexture = new BABYLON.Texture("images/cible.png", scene);
     sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
 
-    let xrand = Math.floor(Math.random()*500 - 250);
-    let zrand = Math.floor(Math.random()*500 - 250);
-    
+    let xrand = Math.floor(Math.random() * 500 - 250);
+    let zrand = Math.floor(Math.random() * 500 - 250);
+
     sphere.position.x = xrand;
     sphere.position.y = 5;
     sphere.position.z = zrand;
-    sphere.frontVector = new BABYLON.Vector3(xrand,zrand,1);
+    sphere.frontVector = new BABYLON.Vector3(xrand, zrand, 1);
 
     sphere.checkCollisions = true;
 
@@ -216,18 +225,18 @@ function createSphere(scene, id) {
 }
 
 function createBamboo(scene, id) {
-    let bamboo = BABYLON.MeshBuilder.CreateCylinder("myBamboo" + id, {height: 30, diameter: 2}, scene);
+    let bamboo = BABYLON.MeshBuilder.CreateCylinder("myBamboo" + id, { height: 30, diameter: 2 }, scene);
     bamboo.material = new BABYLON.StandardMaterial("bambooMaterial", scene);
     bamboo.material.diffuseTexture = new BABYLON.Texture("images/bamboo.jpg", scene);
     bamboo.physicsImpostor = new BABYLON.PhysicsImpostor(bamboo, BABYLON.PhysicsImpostor.CylinderImpostor, { mass: 2, restitution: 0.9 }, scene);
 
-    let xrand = Math.floor(Math.random()*500 - 250);
-    let zrand = Math.floor(Math.random()*500 - 250);
-    
+    let xrand = Math.floor(Math.random() * 500 - 250);
+    let zrand = Math.floor(Math.random() * 500 - 250);
+
     bamboo.position.x = xrand;
     bamboo.position.y = 15;
     bamboo.position.z = zrand;
-    bamboo.frontVector = new BABYLON.Vector3(xrand,zrand,1);
+    bamboo.frontVector = new BABYLON.Vector3(xrand, zrand, 1);
 
     bamboo.checkCollisions = true;
 
@@ -236,53 +245,53 @@ function createBamboo(scene, id) {
 
 function configureAssetManager(scene) {
     scene.assets = {};
-  
+
     let assetsManager = new BABYLON.AssetsManager(scene);
-  
+
     assetsManager.onProgress = function (
-      remainingCount,
-      totalCount,
-      lastFinishedTask
+        remainingCount,
+        totalCount,
+        lastFinishedTask
     ) {
-      engine.loadingUIText =
-        "We are loading the scene. " +
-        remainingCount +
-        " out of " +
-        totalCount +
-        " items still need to be loaded.";
-      console.log(
-        "We are loading the scene. " +
-        remainingCount +
-        " out of " +
-        totalCount +
-        " items still need to be loaded."
-      );
+        engine.loadingUIText =
+            "We are loading the scene. " +
+            remainingCount +
+            " out of " +
+            totalCount +
+            " items still need to be loaded.";
+        console.log(
+            "We are loading the scene. " +
+            remainingCount +
+            " out of " +
+            totalCount +
+            " items still need to be loaded."
+        );
     };
-  
+
     assetsManager.onFinish = function (tasks) {
-      engine.runRenderLoop(function () {
-        scene.toRender();
-      });
+        engine.runRenderLoop(function () {
+            scene.toRender();
+        });
     };
-  
+
     return assetsManager;
 }
 
 function loadSounds(scene) {
     var assetsManager = scene.assetsManager;
-  
+
     var binaryTask = assetsManager.addBinaryFileTask("crunchcrunch", "sounds/crunchcrunch.wav");
     binaryTask.onSuccess = function (task) {
-      scene.assets.crunchcrunchSound = new BABYLON.Sound("crunchcrunch", task.data, scene, null,
-        { loop: false, spatialSound: true }
-      );
+        scene.assets.crunchcrunchSound = new BABYLON.Sound("crunchcrunch", task.data, scene, null,
+            { loop: false, spatialSound: false }
+        );
     };
 
     var binaryTask = assetsManager.addBinaryFileTask("ambiance", "sounds/ambiance.wav");
     binaryTask.onSuccess = function (task) {
-      scene.assets.ambianceSound = new BABYLON.Sound("ambiance", task.data, scene, null,
-        { autoplay: true, loop: true }
-      );
+        scene.assets.ambianceSound = new BABYLON.Sound("ambiance", task.data, scene, null,
+            { autoplay: true, loop: true }
+        );
     };
 }
 
@@ -292,7 +301,7 @@ window.addEventListener("resize", () => {
 
 function modifySettings() {
     scene.onPointerDown = () => {
-        if(!scene.alreadyLocked) {
+        if (!scene.alreadyLocked) {
             console.log("requesting pointer lock");
             canvas.requestPointerLock();
         } else {
@@ -302,7 +311,7 @@ function modifySettings() {
 
     document.addEventListener("pointerlockchange", () => {
         let element = document.pointerLockElement || null;
-        if(element) {
+        if (element) {
             scene.alreadyLocked = true;
         } else {
             scene.alreadyLocked = false;
@@ -314,32 +323,32 @@ function modifySettings() {
     inputStates.up = false;
     inputStates.down = false;
     inputStates.space = false;
-    
+
     window.addEventListener('keydown', (event) => {
-        if ((event.key === "ArrowLeft") || (event.key === "q")|| (event.key === "Q")) {
-           inputStates.left = true;
-        } else if ((event.key === "ArrowUp") || (event.key === "z")|| (event.key === "Z")){
-           inputStates.up = true;
-        } else if ((event.key === "ArrowRight") || (event.key === "d")|| (event.key === "D")){
-           inputStates.right = true;
-        } else if ((event.key === "ArrowDown")|| (event.key === "s")|| (event.key === "S")) {
-           inputStates.down = true;
-        }  else if (event.key === " ") {
-           inputStates.space = true;
+        if ((event.key === "ArrowLeft") || (event.key === "q") || (event.key === "Q")) {
+            inputStates.left = true;
+        } else if ((event.key === "ArrowUp") || (event.key === "z") || (event.key === "Z")) {
+            inputStates.up = true;
+        } else if ((event.key === "ArrowRight") || (event.key === "d") || (event.key === "D")) {
+            inputStates.right = true;
+        } else if ((event.key === "ArrowDown") || (event.key === "s") || (event.key === "S")) {
+            inputStates.down = true;
+        } else if (event.key === " ") {
+            inputStates.space = true;
         }
     }, false);
 
     window.addEventListener('keyup', (event) => {
-        if ((event.key === "ArrowLeft") || (event.key === "q")|| (event.key === "Q")) {
-           inputStates.left = false;
-        } else if ((event.key === "ArrowUp") || (event.key === "z")|| (event.key === "Z")){
-           inputStates.up = false;
-        } else if ((event.key === "ArrowRight") || (event.key === "d")|| (event.key === "D")){
-           inputStates.right = false;
-        } else if ((event.key === "ArrowDown")|| (event.key === "s")|| (event.key === "S")) {
-           inputStates.down = false;
-        }  else if (event.key === " ") {
-           inputStates.space = false;
+        if ((event.key === "ArrowLeft") || (event.key === "q") || (event.key === "Q")) {
+            inputStates.left = false;
+        } else if ((event.key === "ArrowUp") || (event.key === "z") || (event.key === "Z")) {
+            inputStates.up = false;
+        } else if ((event.key === "ArrowRight") || (event.key === "d") || (event.key === "D")) {
+            inputStates.right = false;
+        } else if ((event.key === "ArrowDown") || (event.key === "s") || (event.key === "S")) {
+            inputStates.down = false;
+        } else if (event.key === " ") {
+            inputStates.space = false;
         }
     }, false);
 }
