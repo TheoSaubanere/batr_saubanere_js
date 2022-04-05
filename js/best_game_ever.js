@@ -68,7 +68,9 @@ function createScene() {
                         console.log("ON JOUE LE CRUNCHCRUNCH SOUND")
                     }
 
-                    if(!scene.bamboo[i]._disposed){
+                    if(!scene.bamboo[i]._isDisposed){
+                        // Le fait de tester _isDisposed permet de voir si l'objet, même si il
+                        // n'est pas encore supprimé, est en cours de suppression (_isDisposed)
                         scene.bamboo[i].dispose();
                         console.log("J'incrémente le score")
                     }
