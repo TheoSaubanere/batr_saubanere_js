@@ -16,34 +16,34 @@ function startGame() {
 
     let tank = scene.getMeshByName("myPandaTank");
 
-
-    engine.runRenderLoop(() => {
+    scene.toRender = () => {
         let deltaTime = engine.getDeltaTime();
 
         tank.move();
         
         scene.render();
-    });
+    };
+
+    scene.assetsManager.load();
 }
 
 function createScene() {
     let scene = new BABYLON.Scene(engine);
     scene.enablePhysics();
 
+    scene.assetsManager = configureAssetManager(scene);
+
     createGround(scene);
     createWalls(scene);
     createLights(scene);
     
     let tank = createTank(scene);
-    tank.physicsImpostor = new BABYLON.PhysicsImpostor(tank, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0 }, scene);
 
     scene.spheres = [];
     for(let i = 0; i < 10; i++) {
         scene.spheres[i] = createSphere(scene, i);
-    	scene.spheres[i].physicsImpostor.registerOnPhysicsCollide([tank.physicsImpostor], () => {
-		scene.spheres[i].setEnabled(true);
-        })
     }
+
     scene.bamboo = [];
     for(let i = 0; i < 10; i++) {
         scene.bamboo[i] = createBamboo(scene, i);
@@ -52,22 +52,31 @@ function createScene() {
     let followCamera = createFollowCamera(scene, tank);
     scene.activeCamera = followCamera;
 
+    loadSounds(scene);
+
     scene.registerBeforeRender(
+        
         tank.crunchcrunch = () => {
 
             for(let i = 0; i < 10; i++) {
                 if (scene.bamboo[i].intersectsMesh(tank, false)){
+                    scene.assets.crunchcrunchSound.setPosition(tank.position);
+                    scene.assets.crunchcrunchSound.setPlaybackRate(0.8 + (Math.random() - 0.8));
+                    scene.assets.crunchcrunchSound.play();
+
                     scene.bamboo[i].dispose();
                 }
             }   
         }
     );
+
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
  
    return scene;
 }
 
 function createGround(scene) {
-    var ground = BABYLON.Mesh.CreateGround("ground1", 1000, 1000, 2, scene);
+    var ground = BABYLON.Mesh.CreateGround("ground", 1000, 1000, 2, scene);
     ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
 
     const groundMat = new BABYLON.StandardMaterial("groundMat");
@@ -225,6 +234,58 @@ function createBamboo(scene, id) {
     return bamboo;
 }
 
+function configureAssetManager(scene) {
+    scene.assets = {};
+  
+    let assetsManager = new BABYLON.AssetsManager(scene);
+  
+    assetsManager.onProgress = function (
+      remainingCount,
+      totalCount,
+      lastFinishedTask
+    ) {
+      engine.loadingUIText =
+        "We are loading the scene. " +
+        remainingCount +
+        " out of " +
+        totalCount +
+        " items still need to be loaded.";
+      console.log(
+        "We are loading the scene. " +
+        remainingCount +
+        " out of " +
+        totalCount +
+        " items still need to be loaded."
+      );
+    };
+  
+    assetsManager.onFinish = function (tasks) {
+      engine.runRenderLoop(function () {
+        scene.toRender();
+      });
+    };
+  
+    return assetsManager;
+}
+
+function loadSounds(scene) {
+    var assetsManager = scene.assetsManager;
+  
+    var binaryTask = assetsManager.addBinaryFileTask("crunchcrunch", "sounds/crunchcrunch.wav");
+    binaryTask.onSuccess = function (task) {
+      scene.assets.crunchcrunchSound = new BABYLON.Sound("crunchcrunch", task.data, scene, null,
+        { loop: false, spatialSound: true }
+      );
+    };
+
+    var binaryTask = assetsManager.addBinaryFileTask("ambiance", "sounds/ambiance.wav");
+    binaryTask.onSuccess = function (task) {
+      scene.assets.ambianceSound = new BABYLON.Sound("ambiance", task.data, scene, null,
+        { autoplay: true, loop: true }
+      );
+    };
+}
+
 window.addEventListener("resize", () => {
     engine.resize()
 });
@@ -240,7 +301,7 @@ function modifySettings() {
     }
 
     document.addEventListener("pointerlockchange", () => {
-        let element = document.pointerLockElement || null;
+        let element = document.pointerLockElement || null;
         if(element) {
             scene.alreadyLocked = true;
         } else {
