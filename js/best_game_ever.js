@@ -38,13 +38,7 @@ function createScene() {
     createWalls(scene);
     createLights(scene);
 
-
     let tank = createTank(scene);
-
-    scene.spheres = [];
-    for (let i = 0; i < 10; i++) {
-        scene.spheres[i] = createSphere(scene, i);
-    }
 
     scene.bamboo = [];
     for (let i = 0; i < bamboosRemaining; i++) {
@@ -88,8 +82,19 @@ function createScene() {
 
                             if (bamboosRemaining > 1 ){
                                 document.getElementById("bamboosRemaining").innerText = bamboosRemaining + " Bamboos remaining, gotta catch 'em all !";
-                            } else {
+                            } else if (bamboosRemaining == 1) {
                                 document.getElementById("bamboosRemaining").innerText = bamboosRemaining + " Bamboo remaining, gotta catch 'em all !";
+                            } else {
+                                document.getElementById("bamboosRemaining").innerText = "YOU WON ! Reload the game to play again :)"
+                                BABYLON.ParticleHelper.CreateAsync("explosion", scene).then((set) => {
+                                    set.systems.forEach((s) => {
+                                      s.emitter = tank.position;
+                                      console.log(s.emitter)
+                              
+                                      s.disposeOnStop = true;
+                                    });
+                                    set.start();
+                                  });
                             }
                         }
                     }
@@ -221,25 +226,6 @@ function createTank(scene) {
     }
 
     return tank;
-}
-
-function createSphere(scene, id) {
-    let sphere = BABYLON.MeshBuilder.CreateSphere("mySphere" + id, { diameter: 5, segments: 32 }, scene);
-    sphere.material = new BABYLON.StandardMaterial("sphereMaterial", scene);
-    sphere.material.diffuseTexture = new BABYLON.Texture("images/cible.png", scene);
-    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
-
-    let xrand = Math.floor(Math.random() * 500 - 250);
-    let zrand = Math.floor(Math.random() * 500 - 250);
-
-    sphere.position.x = xrand;
-    sphere.position.y = 5;
-    sphere.position.z = zrand;
-    sphere.frontVector = new BABYLON.Vector3(xrand, zrand, 1);
-
-    sphere.checkCollisions = true;
-
-    return sphere;
 }
 
 function createBamboo(scene, id) {
