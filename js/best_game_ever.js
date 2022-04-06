@@ -27,6 +27,7 @@ function startGame() {
     scene.assetsManager.load();
 }
 
+let bamboosRemaining = 10
 function createScene() {
     let scene = new BABYLON.Scene(engine);
     scene.enablePhysics();
@@ -37,6 +38,7 @@ function createScene() {
     createWalls(scene);
     createLights(scene);
 
+
     let tank = createTank(scene);
 
     scene.spheres = [];
@@ -45,9 +47,10 @@ function createScene() {
     }
 
     scene.bamboo = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < bamboosRemaining; i++) {
         scene.bamboo[i] = createBamboo(scene, i);
     }
+    document.getElementById("bamboosRemaining").innerText = bamboosRemaining + " Bamboos remaining, gotta catch 'em all !";
 
     let followCamera = createFollowCamera(scene, tank);
     scene.activeCamera = followCamera;
@@ -55,33 +58,46 @@ function createScene() {
     loadSounds(scene);
 
     scene.registerBeforeRender(
-
+        
         tank.crunchcrunch = () => {
+            tank.actionManager = new BABYLON.ActionManager(scene);
+            scene.bamboo.forEach((bamboo) => {
+                tank.actionManager.registerAction(
+                    new BABYLON.ExecuteCodeAction(
+                    {
+                        trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+                        parameter: bamboo,
+                    },
+                    () => {
+                        if (!scene.assets.crunchcrunchSound.isPlaying) {
+                            scene.assets.crunchcrunchSound.setPosition(tank.position);
+                            scene.assets.crunchcrunchSound.setPlaybackRate(0.8 + (Math.random() - 0.8));
+                            scene.assets.crunchcrunchSound.play();
 
-            for (let i = 0; i < 10; i++) {
-                if (scene.bamboo[i].intersectsMesh(tank, false)) {
-                    if (!scene.assets.crunchcrunchSound.isPlaying) {
-                        scene.assets.crunchcrunchSound.setPosition(tank.position);
-                        scene.assets.crunchcrunchSound.setPlaybackRate(0.8 + (Math.random() - 0.8));
-                        scene.assets.crunchcrunchSound.play();
+                            console.log("ON JOUE LE CRUNCHCRUNCH SOUND !")
+                        }
 
-                        console.log("ON JOUE LE CRUNCHCRUNCH SOUND")
+                        if(!bamboo._isDisposed){
+                            // Le fait de tester _isDisposed permet de voir si l'objet, même si il
+                            // n'est pas encore supprimé, est en cours de suppression (_isDisposed)
+                            bamboo.dispose();
+                            console.log("On décrémente le score");
+                            
+                            // on décrémente le score
+                            bamboosRemaining -= 1;
+
+                            if (bamboosRemaining > 1 ){
+                                document.getElementById("bamboosRemaining").innerText = bamboosRemaining + " Bamboos remaining, gotta catch 'em all !";
+                            } else {
+                                document.getElementById("bamboosRemaining").innerText = bamboosRemaining + " Bamboo remaining, gotta catch 'em all !";
+                            }
+                        }
                     }
-
-                    if(!scene.bamboo[i]._isDisposed){
-                        // Le fait de tester _isDisposed permet de voir si l'objet, même si il
-                        // n'est pas encore supprimé, est en cours de suppression (_isDisposed)
-                        scene.bamboo[i].dispose();
-                        console.log("J'incrémente le score")
-                    }
-
-                    // on incrémente le score
-                }
-            }
+                    )
+                );
+            });
         }
     );
-
-    //var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
     return scene;
 }
